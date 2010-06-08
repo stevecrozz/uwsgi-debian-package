@@ -1,0 +1,3 @@
+100605_01_remove_extra_dependencies_of_plugins.patch
+100605_02_enable_erlang_integration.patch
+100608_01_add_possibility_of_override_ngx_http_uwsgi_temp_path.patch

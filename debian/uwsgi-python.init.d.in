@@ -1,0 +1,460 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          @@uwsgi_binary@@
+# Required-Start:    $local_fs $remote_fs $network
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/stop @@uwsgi_binary@@ server instance(s)
+### END INIT INFO
+
+# Author: Leonid Borisenko <leo.borisenko@gmail.com>
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="WSGI server(s)"             # Introduce a short description here
+NAME="@@uwsgi_binary@@"           # Introduce the short server's name here
+DAEMON=/usr/sbin/@@uwsgi_binary@@ # Introduce the server's location here
+SCRIPTNAME=/etc/init.d/$NAME
+CONFDIR=/etc/uwsgi/@@uwsgi_binary@@
+
+RUNDIR=/var/run/uwsgi
+UWSGI_RUNDIR=$RUNDIR/@@uwsgi_binary@@
+DEFAULT_DAEMON_RUNDIR=$RUNDIR/default
+DEFAULT_DAEMON_PIDFILE=$DEFAULT_DAEMON_RUNDIR/@@uwsgi_binary@@.pid
+DEFAULT_DAEMON_SOCKET=$DEFAULT_DAEMON_RUNDIR/@@uwsgi_binary@@.socket
+
+LOGDIR=/var/log/uwsgi
+UWSGI_LOGDIR=$LOGDIR/@@uwsgi_binary@@
+
+# Exit if the package is not installed
+[ -x $DAEMON ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# Load the VERBOSE setting and other rcS variables
+. /lib/init/vars.sh
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
+install_dir()
+{
+  local DIR=$1
+  local DIR_UID=$2
+  local DIR_GID=$3
+  local DIR_MODE=$4
+
+  if [ -z "$DIR_UID" ]; then DIR_UID=root; fi
+  if [ -z "$DIR_GID" ]; then DIR_GID=root; fi
+  if [ -z "$DIR_MODE" ]; then DIR_MODE=755; fi
+
+  if [ ! -e "$DIR" ]; then
+    mkdir -p "$DIR"
+    chown "$DIR_UID":"$DIR_GID" "$DIR"
+    chmod "$DIR_MODE" "$DIR"
+  fi
+}
+
+extract_id()
+{
+  local KIND=$1
+  local CONFNAME=$2
+
+  local CONFFILE=$CONFDIR/$CONFNAME.xml
+
+  local ID=$(
+    grep --max-count=1 "<${KIND}>.\+</${KIND}>" "$CONFFILE" \
+    | sed -e "s/.*<${KIND}>\s*\(.*\)\s*<\/${KIND}>.*/\1/g"
+  )
+  if [ -z "$ID" ]; then
+    ID=$(
+      echo "$DAEMON_OPTS" \
+      | sed -e "s/.*--${KIND}\s*\([^[:space:]]\+\).*/\1/g"
+    )
+    if [ "$ID" = "$DAEMON_OPTS" ]; then ID=''; fi
+  fi
+
+  echo $ID
+}
+
+find_specific_rundir()
+{
+  local $CONFNAME=$1
+  echo "$UWSGI_RUNDIR/$CONFNAME"
+}
+
+find_specific_pidfile()
+{
+  local CONFNAME=$1
+  local SPECIFIC_RUNDIR=$(find_specific_rundir $CONFNAME)
+  echo "$SPECIFIC_RUNDIR/pid"
+}
+
+find_specific_socket()
+{
+  local CONFNAME=$1
+  local SPECIFIC_RUNDIR=$(find_specific_rundir $CONFNAME)
+  echo "$SPECIFIC_RUNDIR/socket"
+}
+
+chown_and_chmod_service_files()
+{
+  local PIDFILE=$1
+  local SOCKET=$2
+
+  if [ -e "$PIDFILE" ]; then
+    chown root:root $PIDFILE
+    chmod 644 $PIDFILE
+  fi
+  if [ -e "$SOCKET" ]; then
+    chmod o-rwx $SOCKET
+  fi
+}
+
+do_start_specific_daemon()
+{
+  local CONFNAME=$1
+
+  # Return
+  #   0 if daemon has been started
+  #   1 if daemon was already running
+  #   2 if daemon could not be started
+
+  local CONFFILE=$CONFDIR/$CONFNAME.xml
+  if [ ! -e "$CONFFILE" ]; then
+    return 2
+  fi
+
+  local UWSGI_UID=$(extract_id uid "$CONFNAME")
+  local UWSGI_GID=$(extract_id gid "$CONFNAME")
+
+  local SPECIFIC_RUNDIR=$(find_specific_rundir $CONFNAME)
+  local PIDFILE=$(find_specific_pidfile $CONFNAME)
+  local SOCKET=$(find_specific_socket $CONFNAME)
+
+  install_dir $RUNDIR
+  install_dir $UWSGI_RUNDIR
+  install_dir $SPECIFIC_RUNDIR $UWSGI_UID $UWSGI_GID
+
+  start-stop-daemon --start --quiet \
+    --pidfile $PIDFILE \
+    --exec $DAEMON \
+    --test > /dev/null \
+      || return 1
+
+  local DAEMON_ARGS=" \
+    $DAEMON_OPTS \
+    --daemonize $UWSGI_LOGDIR/${CONFNAME}.@@uwsgi_binary@@.log \
+    --pidfile $PIDFILE \
+    --socket $SOCKET \
+    --xmlconfig $CONFFILE \
+  "
+  start-stop-daemon --start --quiet \
+    --pidfile $PIDFILE \
+    --exec $DAEMON -- $DAEMON_ARGS \
+      || return 2
+
+  sleep 0.1
+  chown_and_chmod_service_files $PIDFILE $SOCKET
+
+  return 0
+}
+
+do_stop_specific_daemon()
+{
+  local CONFNAME=$1
+  local SPECIFIC_RUNDIR=$(find_specific_rundir $CONFNAME)
+  local PIDFILE=$(find_specific_pidfile $CONFNAME)
+
+  # Return
+  #   0 if daemon has been stopped
+  #   1 if daemon was already stopped
+  #   2 if daemon could not be stopped
+  #   other if a failure occurred
+  start-stop-daemon --stop --quiet \
+    --retry=QUIT/30/KILL/5 \
+    --pidfile $PIDFILE \
+    --name $NAME
+
+  RETVAL="$?"
+  [ "$RETVAL" = 2 ] && return 2
+
+  rm -rf $SPECIFIC_RUNDIR
+
+  return "$RETVAL"
+}
+
+do_reload_specific_daemon()
+{
+  local CONFNAME=$1
+  local PIDFILE=$(find_specific_pidfile $CONFNAME)
+
+  start-stop-daemon --stop --quiet \
+    --signal=HUP \
+    --pidfile $PIDFILE \
+    --name $NAME
+
+  return "$?"
+}
+
+do_force_reload_specific_daemon()
+{
+  local CONFNAME=$1
+  local PIDFILE=$(find_specific_pidfile $CONFNAME)
+
+  start-stop-daemon --stop --quiet \
+    --signal=TERM \
+    --pidfile $PIDFILE \
+    --name $NAME
+
+  return "$?"
+}
+
+do_with_given_specific_daemons()
+{
+  local COMMAND=$1
+  shift
+
+  local ERRORS=0
+  for CONFNAME in "$@"; do
+    if [ ! -e $CONFDIR/$CONFNAME.xml ]; then
+      [ "$VERBOSE" != no ] && log_progress_msg "$CONFNAME?"
+    else
+      case "$COMMAND" in
+        start)        do_start_specific_daemon $CONFNAME ;;
+        stop)         do_stop_specific_daemon $CONFNAME ;;
+        force-reload) do_force_reload_specific_daemon $CONFNAME ;;
+        reload|*)     do_reload_specific_daemon $CONFNAME ;;
+      esac
+      case "$?" in
+        0) [ "$VERBOSE" != no ] && log_progress_msg $CONFNAME ;;
+        1) [ "$VERBOSE" != no ] && log_progress_msg "($CONFNAME)" ;;
+        2) [ "$VERBOSE" != no ] && log_progress_msg "$CONFNAME!"
+           ERRORS=$(expr $ERRORS + 1)
+        ;;
+      esac
+    fi
+  done
+
+  return "$ERRORS"
+}
+
+do_start_default_daemon()
+{
+  local UWSGI_UID=$(id -u www-data 2>/dev/null)
+  [ -z "$UWSGI_UID" ] && UWSGI_UID=$(id -u root 2>/dev/null)
+  local UWSGI_GID=$(id -g www-data 2>/dev/null)
+  [ -z "$UWSGI_GID" ] && UWSGI_GID=$(id -u root 2>/dev/null)
+
+  install_dir $RUNDIR
+  install_dir $DEFAULT_DAEMON_RUNDIR $UWSGI_UID $UWSGI_GID
+
+  start-stop-daemon --start --quiet \
+    --pidfile $DEFAULT_DAEMON_PIDFILE \
+    --exec $DAEMON \
+    --test > /dev/null \
+      || return 1
+
+  local DAEMON_ARGS=" \
+    $DEFAULT_DAEMON_OPTS \
+    --daemonize $LOGDIR/default_daemon.@@uwsgi_binary@@.log \
+    --pidfile $DEFAULT_DAEMON_PIDFILE \
+    --socket $DEFAULT_DAEMON_SOCKET \
+    --uid $UWSGI_UID \
+    --gid $UWSGI_GID \
+  "
+  start-stop-daemon --start --quiet \
+    --pidfile $DEFAULT_DAEMON_PIDFILE \
+    --exec $DAEMON -- $DAEMON_ARGS \
+      || return 2
+
+  sleep 0.1
+  chown_and_chmod_service_files $DEFAULT_DAEMON_PIDFILE $DEFAULT_DAEMON_SOCKET
+
+  return 0
+}
+
+do_stop_default_daemon()
+{
+  # Return
+  #   0 if daemon has been stopped
+  #   1 if daemon was already stopped
+  #   2 if daemon could not be stopped
+  #   other if a failure occurred
+  start-stop-daemon --stop --quiet \
+    --retry=QUIT/30/KILL/5 \
+    --pidfile $DEFAULT_DAEMON_PIDFILE \
+    --name $NAME
+
+  RETVAL="$?"
+  [ "$RETVAL" = 2 ] && return 2
+
+  rm -f $DEFAULT_DAEMON_PIDFILE
+  rm -f $DEFAULT_DAEMON_SOCKET
+
+  return "$RETVAL"
+}
+
+do_reload_default_daemon()
+{
+  start-stop-daemon --stop --quiet \
+    --signal=HUP \
+    --pidfile $DEFAULT_DAEMON_PIDFILE \
+    --name $NAME
+
+  return "$?"
+}
+
+do_force_reload_default_daemon()
+{
+  start-stop-daemon --stop --quiet \
+    --signal=TERM \
+    --pidfile $DEFAULT_DAEMON_PIDFILE \
+    --name $NAME
+
+  return "$?"
+}
+
+do_with_default_daemon()
+{
+  local COMMAND=$1
+
+  local ERRORS=0
+  case "$COMMAND" in
+    start)        do_start_default_daemon ;;
+    stop)         do_stop_default_daemon ;;
+    force-reload) do_force_reload_default_daemon ;;
+    reload|*)     do_reload_default_daemon ;;
+  esac
+  case "$?" in
+    0) [ "$VERBOSE" != no ] && log_progress_msg "<default daemon>" ;;
+    1) [ "$VERBOSE" != no ] && log_progress_msg "(<default daemon>)" ;;
+    2) [ "$VERBOSE" != no ] && log_progress_msg "<default daemon>!"
+       ERRORS=$(expr $ERRORS + 1)
+    ;;
+  esac
+
+  return "$ERRORS"
+}
+
+do_command()
+{
+  local COMMAND=$1
+  shift
+
+  local COMMAND_TO_DEFAULT=no
+  local WITH_STRIPPED_SUFFIX=${COMMAND%-default}
+  [ "$WITH_STRIPPED_SUFFIX" = "$COMMAND" ] || COMMAND_TO_DEFAULT=yes
+  COMMAND="$WITH_STRIPPED_SUFFIX"
+
+  [ "$VERBOSE" != no ] && log_progress_msg "->"
+
+  if [ "$COMMAND_TO_DEFAULT" = yes ]; then
+    do_with_default_daemon $COMMAND
+    return "$?"
+  fi
+
+  if [ ! -z "$1" ]; then
+    do_with_given_specific_daemons $COMMAND "$@"
+    return "$?"
+  fi
+
+  local ERRORS=0
+  local ALL_CONFNAMES=$(
+    ls -1 "$CONFDIR"/*.xml 2>/dev/null \
+    | sed 's/^.\+\/\(.\+\)\.xml$/\1/g' \
+    | tr '\n' ' '
+  )
+
+  if [ "$COMMAND" = start -a -z "$ALL_CONFNAMES" -a "$RUN_AT_STARTUP" != 1 ]; then
+    [ "$VERBOSE" != no ] && log_progress_msg "(disabled; see /etc/default/#{NAME})"
+    return 2
+  fi
+
+  if [ -z "$ALL_CONFNAMES" -o "$ALWAYS_RUN_DEFAULT_DAEMON" = 1 ]; then
+    do_with_default_daemon $COMMAND
+    ERRORS=$(expr $ERRORS + $?)
+  fi
+  do_with_given_specific_daemons $COMMAND $ALL_CONFNAMES
+  ERRORS=$(expr $ERRORS + $?)
+
+
+  return "$ERRORS"
+}
+
+WHAT=$1
+shift
+case "$WHAT" in
+  start|start-default)
+    [ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC " "$NAME"
+    do_command "$WHAT" "$@"
+    RETVAL="$?"
+    [ "$VERBOSE" != no ] && log_end_msg "$RETVAL"
+  ;;
+
+  stop|stop-default)
+    [ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+    do_command "$WHAT" "$@"
+    RETVAL="$?"
+    [ "$VERBOSE" != no ] && log_end_msg "$RETVAL"
+  ;;
+
+  status)
+    if [ -z "$1" ]; then
+      status_of_proc -p $DEFAULT_DAEMON_PIDFILE "$DAEMON" "$NAME" \
+        && exit 0 \
+        || exit $?
+    else
+      status_of_proc -p $(find_specific_pidfile $1) "$DAEMON" "$NAME" \
+        && exit 0 \
+        || exit $?
+    fi
+  ;;
+
+  reload|reload-default)
+    [ "$VERBOSE" != no ] && log_daemon_msg "Reloading $DESC" "$NAME"
+    do_command "$WHAT" "$@"
+    RETVAL="$?"
+    [ "$VERBOSE" != no ] && log_end_msg "$RETVAL"
+  ;;
+
+  force-reload|force-reload-default)
+    [ "$VERBOSE" != no ] && log_daemon_msg "Forced reloading $DESC" "$NAME"
+    do_command "$WHAT" "$@"
+    RETVAL="$?"
+    [ "$VERBOSE" != no ] && log_end_msg "$RETVAL"
+  ;;
+
+  restart|restart-default)
+    SUFFIX_DEFAULT=""
+    if [ "$WHAT" = "restart-default" ]; then
+      SUFFIX_DEFAULT="-default"
+    fi
+
+    [ "$VERBOSE" != no ] && log_daemon_msg "Restarting $DESC" "$NAME"
+    VERBOSE=no
+    do_command "stop$SUFFIX_DEFAULT" "$@"
+    VERBOSE=yes
+    case "$?" in
+      0)
+        do_command "start$SUFFIX_DEFAULT" "$@"
+        RETVAL="$?"
+        [ "$VERBOSE" != no ] && log_end_msg "$RETVAL"
+      ;;
+      *)
+        # Failed to stop
+        [ "$VERBOSE" != no ] && log_end_msg 1
+      ;;
+    esac
+  ;;
+
+  *)
+    echo "Usage: $SCRIPTNAME {start|stop|status|restart|reload|force-reload}" >&2
+    exit 3
+  ;;
+esac
+
+:

@@ -1,0 +1,5 @@
+uwsgi (0.9.5.1-1) lenny; urgency=low
+
+  * Initial release.
+
+ -- Leonid Borisenko <leo.borisenko@gmail.com>  Sat, 05 Jun 2010 02:58:14 +0300

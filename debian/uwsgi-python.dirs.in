@@ -1,0 +1,2 @@
+etc/uwsgi/@@uwsgi_binary@@
+var/log/uwsgi/@@uwsgi_binary@@

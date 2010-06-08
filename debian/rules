@@ -1,0 +1,80 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+
+default_python = /usr/bin/python
+builder = $(CURDIR)/uwsgiconfig.py
+plugins_dir = plugins
+
+list_pkgname_suffixes = $(strip \
+	$(shell \
+		grep "^Package: $(1)" $(CURDIR)/debian/control \
+		| sed 's/Package: $(1)//' \
+	) \
+)
+
+python_ver = $(call list_pkgname_suffixes,uwsgi-python)
+plugins = $(call list_pkgname_suffixes,uwsgi-plugin-)
+uwsgi_python_pkg_templates = dirs install default init.d logrotate \
+														 manpages README.Debian
+
+last_pkgname_component = $(lastword $(subst -, ,$(1)))
+
+DEB_COMPRESS_EXCLUDE = .class .java .rb
+
+clean::
+	$(RM) $(CURDIR)/uwsgi $(addprefix $(CURDIR)/uwsgi-python, $(python_ver))
+	$(RM) $(CURDIR)/*.{o,pyc}
+	for name in $(plugins); do \
+		$(RM) $(CURDIR)/$(plugins_dir)/$$name/$${name}_plugin.so; \
+		$(RM) $(CURDIR)/$(plugins_dir)/$$name/uwsgiplugin.pyc; \
+	done
+	$(RM) -r apache2/.libs apache2/mod_uwsgi.{la,lo,slo}
+	for type in $(uwsgi_python_pkg_templates); do \
+		$(RM) $(addprefix $(CURDIR)/debian/uwsgi-python,$(addsuffix .$$type,$(python_ver))); \
+	done
+	$(RM) $(addprefix $(CURDIR)/debian/uwsgi-python,$(addsuffix .8,$(python_ver)))
+	$(RM) $(addprefix $(CURDIR)/debian/uwsgi-plugin-,$(addsuffix .install,$(plugins)))
+	$(RM) $(CURDIR)/debian/stamp-*
+
+$(patsubst %,build/uwsgi-python%,$(python_ver)):: build/% : %
+
+$(patsubst %,uwsgi-python%,$(python_ver)):
+	$(eval python = $(call last_pkgname_component,$@))
+	/usr/bin/$(python) $(builder) --build
+	for type in $(uwsgi_python_pkg_templates); do \
+		sed -e 's/@@uwsgi_binary@@/$@/g' \
+			< $(CURDIR)/debian/uwsgi-python.$${type}.in \
+			> $(CURDIR)/debian/$@.$${type}; \
+	done
+	mv $(CURDIR)/uwsgi $(CURDIR)/$@
+
+$(patsubst %,build/uwsgi-plugin-%,$(plugins)):: build/uwsgi-plugin-% : debian/stamp-plugin-%
+
+$(patsubst %,debian/stamp-plugin-%,$(plugins)):
+	$(eval plugin_name = $(call last_pkgname_component,$(notdir $@)))
+	$(default_python) $(builder) --plugin $(plugins_dir)/$(plugin_name)
+	touch $@
+
+build/libapache2-mod-uwsgi::
+	apxs2 -c \
+		`apr-config --link-ld` `apu-config --link-ld` \
+		$(CURDIR)/apache2/mod_uwsgi.c
+
+$(patsubst %,install/uwsgi-python%,$(python_ver))::
+	help2man \
+		--name 'fast (pure C), self-healing, developer-friendly WSGI server' \
+		--section 8 \
+		--no-info \
+		$(CURDIR)/$(cdbs_curpkg) \
+		> $(CURDIR)/debian/$(cdbs_curpkg).8
+
+$(patsubst %,install/uwsgi-plugin-%,$(plugins))::
+	$(eval plugin_name = $(call last_pkgname_component,$(notdir $@)))
+	sed -e 's/@@plugin_name@@/$(plugin_name)/g' \
+		< $(CURDIR)/debian/uwsgi-plugin.install.in \
+		> $(CURDIR)/debian/$(cdbs_curpkg).install
+
+binary-post-install/uwsgi-various::
+	$(eval docdir = $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg))
+	mv $(docdir)/uwsgi_params $(docdir)/uwsgi_params.nginx

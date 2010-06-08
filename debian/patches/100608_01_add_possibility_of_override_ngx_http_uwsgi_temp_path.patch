@@ -1,0 +1,14 @@
+Index: uwsgi-0.9.5.1/nginx/ngx_http_uwsgi_module.c
+===================================================================
+--- uwsgi-0.9.5.1.orig/nginx/ngx_http_uwsgi_module.c	2010-06-08 06:22:37.000000000 +0300
++++ uwsgi-0.9.5.1/nginx/ngx_http_uwsgi_module.c	2010-06-08 06:22:59.000000000 +0300
+@@ -35,7 +35,9 @@
+ #include <ngx_core.h>
+ #include <ngx_http.h>
+ 
++#ifndef NGX_HTTP_UWSGI_TEMP_PATH
+ #define NGX_HTTP_UWSGI_TEMP_PATH  "uwsgi_temp"
++#endif
+ 
+ typedef struct {
+     ngx_http_upstream_conf_t upstream;

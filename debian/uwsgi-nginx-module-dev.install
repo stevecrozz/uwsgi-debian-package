@@ -1,0 +1,2 @@
+nginx/config usr/lib/uwsgi/nginx_module
+nginx/ngx_http_uwsgi_module.c usr/lib/uwsgi/nginx_module

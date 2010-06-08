@@ -1,0 +1,2 @@
+version=3
+http://projects.unbit.it/downloads/uwsgi-(\d.*)\.tar\.gz debian uupdate

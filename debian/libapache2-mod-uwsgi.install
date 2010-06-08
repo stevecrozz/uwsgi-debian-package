@@ -1,0 +1,2 @@
+apache2/.libs/mod_uwsgi.so usr/lib/apache2/modules
+debian/uwsgi.load etc/apache2/mods-available

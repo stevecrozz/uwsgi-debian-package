@@ -1,0 +1,84 @@
+Automatic starting of additional instances of uWSGI
+===================================================
+
+init.d script automatically starts one instance of @@uwsgi_binary@@ for each
+XML configuration file found in /etc/uwsgi/@@uwsgi_binary@@/.
+
+This XML file must have '.xml' extension and, at least, following content:
+
+    <uwsgi></uwsgi>
+
+Example of more realistic configuration file:
+
+    <uwsgi>
+      <uid>1002</uid>
+      <gid>1002</gid>
+      <socket>/tmp/uwsgi.1002.sock</socket>
+    </uwsgi>
+
+For list of options passed by default to each started instance see
+/etc/default/@@uwsgi_binary@@.
+
+Controling additional instances of uWSGI
+========================================
+
+You could control these instances by executing
+
+    /etc/init.d/@@uwsgi_binary@@ <command> <confname> <confname> ...
+
+where:
+  * <command> is one of 'start', 'stop' etc.
+  * <confname> is the name of configuration file (without extension)
+
+For example, this is how instance for /etc/uwsgi/@@uwsgi_binary@@/hello.xml is
+started:
+
+    /etc/init.d/@@uwsgi_binary@@ start hello
+
+The default uWSGI daemon
+========================
+
+The special uWSGI instance runned automatically by init.d script, without need
+to manually create any configuration file, is called '<default daemon>'.
+
+You could control specifically this instance by passing commands to init.d script
+with suffix '-default'. For example:
+
+  /etc/init.d/@@uwsgi_binary@@ restart-default
+
+For setting options of '<default daemon>' or for disabling it, look into
+/etc/default/@@uwsgi_binary@@.
+
+Status of executing init.d commands for specific instance
+=========================================================
+
+In init.d script output:
+  * <confname>   -- command was executed without problems
+  * <confname>!  -- command is failed (or executed with some problems)
+  * <confname>?  -- configuration file for this instance isn't found
+                    and this instance is ignored
+  * (<confname>) -- instance is already in needed state
+
+Let's see by example:
+
+    /etc/init.d/@@uwsgi_binary@@ start ario wrogn googl moogl
+
+Output:
+
+    <...> -> (ario) wrogn? googl moogl!
+
+It means that:
+  * 'ario' instance was already runned before executing 'start' command
+  * configuration file for 'wrogn' (i.e. file 'wrogn.xml') wasn't found
+  * 'googl' is started without problems
+  * starting 'moogl' is failed
+
+Return value of init.d script is the number of instances with '!' mark.
+
+init.d status command
+=====================
+
+'status' command can be executed:
+  * without arguments -- it shows status of '<default daemon>' instance
+  * with one argument -- it shows status of instance with given '<confname>'
+

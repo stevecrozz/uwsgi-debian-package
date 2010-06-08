@@ -1,0 +1,13 @@
+Index: uwsgi-0.9.5.1/uwsgiconfig.py
+===================================================================
+--- uwsgi-0.9.5.1.orig/uwsgiconfig.py	2010-06-05 08:14:43.000000000 +0300
++++ uwsgi-0.9.5.1/uwsgiconfig.py	2010-06-05 08:14:49.000000000 +0300
+@@ -3,7 +3,7 @@
+ XML=True
+ SNMP=True
+ SCTP=False
+-ERLANG=False
++ERLANG=True
+ SPOOLER=True
+ EMBEDDED=True
+ UDP=True

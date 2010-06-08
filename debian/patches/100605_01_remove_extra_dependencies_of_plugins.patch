@@ -1,0 +1,13 @@
+Index: uwsgi-0.9.5.1/uwsgiconfig.py
+===================================================================
+--- uwsgi-0.9.5.1.orig/uwsgiconfig.py	2010-06-05 07:48:44.000000000 +0300
++++ uwsgi-0.9.5.1/uwsgiconfig.py	2010-06-05 07:55:21.000000000 +0300
+@@ -277,7 +277,7 @@
+ 	import uwsgiplugin as up
+ 
+ 	cflags.append(up.CFLAGS)
+-	libs.append(up.LDFLAGS)
++	libs = [up.LDFLAGS]
+ 
+ 	cflags.insert(0, '-I.')
+ 

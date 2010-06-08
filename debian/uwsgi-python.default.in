@@ -1,0 +1,48 @@
+# Defaults for @@uwsgi_binary@@ initscript
+# sourced by /etc/init.d/@@uwsgi_binary@@
+
+# Run automatically at system startup?
+RUN_AT_STARTUP=1
+
+# init.d script starts additional instance of @@uwsgi_binary@@ daemon for
+# each user-created configuration file.
+#
+# These options are passed to all instances of @@uwsgi_binary@@, runned by
+# init.d script (except the '<default daemon>' instance, see below).
+#
+# Note: options '--socket', '--daemonize' and '--pidfile' are always added
+#       automatically by init.d script
+#
+# Default socket location: /var/run/uwsgi/@@uwsgi_binary@@/<confname>/socket
+# You could override '--socket' in configuration file.
+DAEMON_OPTS=" \
+  --uid $(id -u www-data) \
+  --gid $(id -g www-data) \
+  --chmod-socket \
+  --master \
+  --enable-threads \
+  --disable-logging \
+"
+
+# Run default daemon even if init.d script found configuration file(s) for
+# running additional user-configured daemon(s)?
+#
+# If you didn't create any configuration file, this option is senseless and,
+# therefore, is ignored.
+ALWAYS_RUN_DEFAULT_DAEMON=1
+
+# Options that are passed to the default daemon.
+#
+# Note: options '--socket', '--uid', '--gid', '--daemonize' and '--pidfile'
+#       are added automatically by init.d script. You shouldn't override these
+#       options.
+#
+# Socket location: /var/run/uwsgi/default/@@uwsgi_binary@@.socket
+# Uid/gid: www-data
+DEFAULT_DAEMON_OPTS=" \
+  --chmod-socket \
+  --master \
+  --processes 2 \
+  --enable-threads \
+  --disable-logging \
+"

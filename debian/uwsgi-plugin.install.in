@@ -1,0 +1,1 @@
+plugins/@@plugin_name@@/@@plugin_name@@_plugin.so usr/lib/uwsgi/plugins
