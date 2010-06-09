@@ -30,11 +30,11 @@ UWSGI_LOGDIR=$LOGDIR/@@uwsgi_binary@@
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
 
-# Read configuration variable file if it is present
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
-
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
 
 # Define LSB log_* functions.
 # Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
