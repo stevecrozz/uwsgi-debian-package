@@ -1,3 +1,17 @@
+The default uWSGI daemon
+========================
+
+The special uWSGI instance runned automatically by init.d script, without need
+to manually create any configuration file, is called '<default daemon>'.
+
+You could control specifically this instance by passing commands to init.d script
+with suffix '-default'. For example:
+
+    /etc/init.d/@@uwsgi_binary@@ restart-default
+
+For setting options of '<default daemon>' or for disabling it, look into
+/etc/default/@@uwsgi_binary@@.
+
 Automatic starting of additional instances of uWSGI
 ===================================================
 
@@ -35,19 +49,25 @@ started:
 
     /etc/init.d/@@uwsgi_binary@@ start hello
 
-The default uWSGI daemon
-========================
+Changing of owner, group and rights for UNIX socket and pidfile
+===============================================================
 
-The special uWSGI instance runned automatically by init.d script, without need
-to manually create any configuration file, is called '<default daemon>'.
+After starting of additional uWSGI instance init.d script tries to chown and/or
+chmod:
+  * pidfile                    | chown root:root   | chmod 644
+  * UNIX socket                |                   | chmod o-rwx
+  * directory with these files | chown <uid>:<gid> | chmod 755
 
-You could control specifically this instance by passing commands to init.d script
-with suffix '-default'. For example:
+Directory with pidfile and socket is located after name of configuration file:
 
-  /etc/init.d/@@uwsgi_binary@@ restart-default
+    /var/run/uwsgi/@@uwsgi_binary@@/<confname>
 
-For setting options of '<default daemon>' or for disabling it, look into
-/etc/default/@@uwsgi_binary@@.
+init.d script tries to parse XML configuration file for values of <uid> or
+<gid> tag. If this tag didn't found, init.d tries to parse DAEMON_OPTS for
+'--uid' or '--gid' option. If even this fails, then directory will be chowned
+to root:root.
+
+For value of DAEMON_OPTS see /etc/default/@@uwsgi_binary@@
 
 Status of executing init.d commands for specific instance
 =========================================================
@@ -81,4 +101,3 @@ init.d status command
 'status' command can be executed:
   * without arguments -- it shows status of '<default daemon>' instance
   * with one argument -- it shows status of instance with given '<confname>'
-
