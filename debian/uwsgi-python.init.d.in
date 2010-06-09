@@ -204,7 +204,6 @@ do_stop_specific_daemon()
 # Return:
 #  0 if daemon has been reloaded
 #  3 if daemon could not be reloaded
-#  other if a failure occurred
 do_reload_specific_daemon()
 {
   local CONFNAME=$1
@@ -215,13 +214,17 @@ do_reload_specific_daemon()
     --pidfile $PIDFILE \
     --name $NAME
 
-  return "$?"
+  RETVAL="$?"
+
+  # There is no such process, nothing to reload!
+  [ "$RETVAL" = 1 ] && RETVAL=3
+
+  return "$RETVAL"
 }
 
 # Return:
 #  0 if daemon has been reloaded
-#  2 if daemon could not be reloaded
-#  other if a failure occurred
+#  3 if daemon could not be reloaded
 do_force_reload_specific_daemon()
 {
   local CONFNAME=$1
@@ -232,7 +235,12 @@ do_force_reload_specific_daemon()
     --pidfile $PIDFILE \
     --name $NAME
 
-  return "$?"
+  RETVAL="$?"
+
+  # There is no such process, nothing to reload!
+  [ "$RETVAL" = 1 ] && RETVAL=3
+
+  return "$RETVAL"
 }
 
 do_with_given_specific_daemons()
@@ -254,7 +262,7 @@ do_with_given_specific_daemons()
       case "$?" in
         0) [ "$VERBOSE" != no ] && log_progress_msg $CONFNAME ;;
         1) [ "$VERBOSE" != no ] && log_progress_msg "($CONFNAME)" ;;
-        2) [ "$VERBOSE" != no ] && log_progress_msg "$CONFNAME!"
+        *) [ "$VERBOSE" != no ] && log_progress_msg "$CONFNAME!"
            ERRORS=$(expr $ERRORS + 1)
         ;;
       esac
@@ -326,8 +334,7 @@ do_stop_default_daemon()
 
 # Return:
 #  0 if daemon has been reloaded
-#  2 if daemon could not be reloaded
-#  other if a failure occurred
+#  3 if daemon could not be reloaded
 do_reload_default_daemon()
 {
   start-stop-daemon --stop --quiet \
@@ -335,13 +342,17 @@ do_reload_default_daemon()
     --pidfile $DEFAULT_DAEMON_PIDFILE \
     --name $NAME
 
-  return "$?"
+  RETVAL="$?"
+
+  # There is no such process, nothing to reload!
+  [ "$RETVAL" = 1 ] && RETVAL=3
+
+  return "$RETVAL"
 }
 
 # Return:
 #  0 if daemon has been reloaded
-#  2 if daemon could not be reloaded
-#  other if a failure occurred
+#  3 if daemon could not be reloaded
 do_force_reload_default_daemon()
 {
   start-stop-daemon --stop --quiet \
@@ -349,7 +360,12 @@ do_force_reload_default_daemon()
     --pidfile $DEFAULT_DAEMON_PIDFILE \
     --name $NAME
 
-  return "$?"
+  RETVAL="$?"
+
+  # There is no such process, nothing to reload!
+  [ "$RETVAL" = 1 ] && RETVAL=3
+
+  return "$RETVAL"
 }
 
 do_with_default_daemon()
@@ -366,7 +382,7 @@ do_with_default_daemon()
   case "$?" in
     0) [ "$VERBOSE" != no ] && log_progress_msg "<default daemon>" ;;
     1) [ "$VERBOSE" != no ] && log_progress_msg "(<default daemon>)" ;;
-    2) [ "$VERBOSE" != no ] && log_progress_msg "<default daemon>!"
+    *) [ "$VERBOSE" != no ] && log_progress_msg "<default daemon>!"
        ERRORS=$(expr $ERRORS + 1)
     ;;
   esac
@@ -409,7 +425,7 @@ do_command()
   )
 
   # Do not start if disabled.
-  if [ "$COMMAND" = start -a -z "$ALL_CONFNAMES" -a "$RUN_AT_STARTUP" != 1 ]; then
+  if [ "$COMMAND" = start -a "$RUN_AT_STARTUP" != 1 ]; then
     [ "$VERBOSE" != no ] && log_progress_msg "(disabled; see /etc/default/#{NAME})"
     return 2
   fi
