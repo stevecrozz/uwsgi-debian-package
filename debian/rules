@@ -6,6 +6,7 @@ default_python = /usr/bin/python
 builder = $(CURDIR)/uwsgiconfig.py
 plugins_dir = plugins
 
+# Search in debian/control for packages with name $(1)% and extract % in list.
 list_pkgname_suffixes = $(strip \
 	$(shell \
 		grep "^Package: $(1)" $(CURDIR)/debian/control \
@@ -16,7 +17,7 @@ list_pkgname_suffixes = $(strip \
 python_ver = $(call list_pkgname_suffixes,uwsgi-python)
 plugins = $(call list_pkgname_suffixes,uwsgi-plugin-)
 uwsgi_python_pkg_templates = dirs install default init.d logrotate \
-														 manpages README.Debian
+                             manpages README.Debian
 
 last_pkgname_component = $(lastword $(subst -, ,$(1)))
 
@@ -37,8 +38,10 @@ clean::
 	$(RM) $(addprefix $(CURDIR)/debian/uwsgi-plugin-,$(addsuffix .install,$(plugins)))
 	$(RM) $(CURDIR)/debian/stamp-*
 
+# Build uwsgi-python% package
 $(patsubst %,build/uwsgi-python%,$(python_ver)):: build/% : %
 
+# Build uwsgi-python% executable
 $(patsubst %,uwsgi-python%,$(python_ver)):
 	$(eval python = $(call last_pkgname_component,$@))
 	/usr/bin/$(python) $(builder) --build
@@ -49,8 +52,10 @@ $(patsubst %,uwsgi-python%,$(python_ver)):
 	done
 	mv $(CURDIR)/uwsgi $(CURDIR)/$@
 
+# Build uwsgi-plugin-% package
 $(patsubst %,build/uwsgi-plugin-%,$(plugins)):: build/uwsgi-plugin-% : debian/stamp-plugin-%
 
+# Build specific uWSGI plugin.
 $(patsubst %,debian/stamp-plugin-%,$(plugins)):
 	$(eval plugin_name = $(call last_pkgname_component,$(notdir $@)))
 	$(default_python) $(builder) --plugin $(plugins_dir)/$(plugin_name)
@@ -61,6 +66,7 @@ build/libapache2-mod-uwsgi::
 		`apr-config --link-ld` `apu-config --link-ld` \
 		$(CURDIR)/apache2/mod_uwsgi.c
 
+# Install uwsgi-python% package
 $(patsubst %,install/uwsgi-python%,$(python_ver))::
 	help2man \
 		--name 'fast (pure C), self-healing, developer-friendly WSGI server' \
@@ -69,6 +75,7 @@ $(patsubst %,install/uwsgi-python%,$(python_ver))::
 		$(CURDIR)/$(cdbs_curpkg) \
 		> $(CURDIR)/debian/$(cdbs_curpkg).8
 
+# Install uwsgi-plugin-% package
 $(patsubst %,install/uwsgi-plugin-%,$(plugins))::
 	$(eval plugin_name = $(call last_pkgname_component,$(notdir $@)))
 	sed -e 's/@@plugin_name@@/$(plugin_name)/g' \
