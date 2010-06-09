@@ -21,7 +21,8 @@ Description: Fast, self-healing, developer-friendly WSGI server
  a plugin loading technology that can be used to add support for other
  languages or platform.
  .
- This package provides uWSGI for serving on the default Python version.
+ This dependency package provides uWSGI for serving on the default Python 
+ version.
 
 Package: uwsgi-python2.5
 Architecture: any
