@@ -100,6 +100,7 @@ Description: uWSGI module for Apache2
 
 Package: uwsgi-nginx-module-dev
 Architecture: any
+Depends: ${misc:Depends}
 Description: uWSGI nginx module source
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
@@ -112,6 +113,7 @@ Description: uWSGI nginx module source
 
 Package: uwsgi-various
 Architecture: any
+Depends: ${misc:Depends}
 Description: Fast, self-healing, developer-friendly WSGI server (various files)
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
