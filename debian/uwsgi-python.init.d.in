@@ -52,12 +52,23 @@ install_dir()
   if [ -z "$DIR_MODE" ]; then DIR_MODE=755; fi
 
   if [ ! -e "$DIR" ]; then
+    # Suppose I don't know about /usr/bin/install
     mkdir -p "$DIR"
     chown "$DIR_UID":"$DIR_GID" "$DIR"
     chmod "$DIR_MODE" "$DIR"
   fi
 }
 
+# Get value of user-defined id (specifically, 'uid' or 'gid') for uWSGI
+# process.
+#
+# It parses XML configuration file with name $CONFNAME for value of first tag
+# <$KIND></$KIND>.
+#
+# If not found, parse $DAEMON_OPTS (defined in /etc/default/@@uwsgi_binary@@),
+# for value of '--$KIND' option.
+#
+# Echo found value or empty string if not found.
 extract_id()
 {
   local KIND=$1
@@ -80,12 +91,14 @@ extract_id()
   echo $ID
 }
 
+# Location of /var/run subdirectory for specific uWSGI process.
 find_specific_rundir()
 {
   local $CONFNAME=$1
   echo "$UWSGI_RUNDIR/$CONFNAME"
 }
 
+# Location of pidfile for specific uWSGI process.
 find_specific_pidfile()
 {
   local CONFNAME=$1
@@ -93,6 +106,7 @@ find_specific_pidfile()
   echo "$SPECIFIC_RUNDIR/pid"
 }
 
+# Location of UNIX socket for specific uWSGI process.
 find_specific_socket()
 {
   local CONFNAME=$1
@@ -100,6 +114,7 @@ find_specific_socket()
   echo "$SPECIFIC_RUNDIR/socket"
 }
 
+# Assigns owner, group and rights to service files, created by uWSGI process.
 chown_and_chmod_service_files()
 {
   local PIDFILE=$1
@@ -114,14 +129,13 @@ chown_and_chmod_service_files()
   fi
 }
 
+# Return:
+#  0 if daemon has been started
+#  1 if daemon was already running
+#  2 if daemon could not be started
 do_start_specific_daemon()
 {
   local CONFNAME=$1
-
-  # Return
-  #   0 if daemon has been started
-  #   1 if daemon was already running
-  #   2 if daemon could not be started
 
   local CONFFILE=$CONFDIR/$CONFNAME.xml
   if [ ! -e "$CONFFILE" ]; then
@@ -163,17 +177,17 @@ do_start_specific_daemon()
   return 0
 }
 
+# Return:
+#  0 if daemon has been stopped
+#  1 if daemon was already stopped
+#  2 if daemon could not be stopped
+#  other if a failure occurred
 do_stop_specific_daemon()
 {
   local CONFNAME=$1
   local SPECIFIC_RUNDIR=$(find_specific_rundir $CONFNAME)
   local PIDFILE=$(find_specific_pidfile $CONFNAME)
 
-  # Return
-  #   0 if daemon has been stopped
-  #   1 if daemon was already stopped
-  #   2 if daemon could not be stopped
-  #   other if a failure occurred
   start-stop-daemon --stop --quiet \
     --retry=QUIT/30/KILL/5 \
     --pidfile $PIDFILE \
@@ -187,6 +201,10 @@ do_stop_specific_daemon()
   return "$RETVAL"
 }
 
+# Return:
+#  0 if daemon has been reloaded
+#  3 if daemon could not be reloaded
+#  other if a failure occurred
 do_reload_specific_daemon()
 {
   local CONFNAME=$1
@@ -200,6 +218,10 @@ do_reload_specific_daemon()
   return "$?"
 }
 
+# Return:
+#  0 if daemon has been reloaded
+#  2 if daemon could not be reloaded
+#  other if a failure occurred
 do_force_reload_specific_daemon()
 {
   local CONFNAME=$1
@@ -242,6 +264,10 @@ do_with_given_specific_daemons()
   return "$ERRORS"
 }
 
+# Return:
+#  0 if daemon has been started
+#  1 if daemon was already running
+#  2 if daemon could not be started
 do_start_default_daemon()
 {
   local UWSGI_UID=$(id -u www-data 2>/dev/null)
@@ -277,13 +303,13 @@ do_start_default_daemon()
   return 0
 }
 
+# Return:
+#  0 if daemon has been stopped
+#  1 if daemon was already stopped
+#  2 if daemon could not be stopped
+#  other if a failure occurred
 do_stop_default_daemon()
 {
-  # Return
-  #   0 if daemon has been stopped
-  #   1 if daemon was already stopped
-  #   2 if daemon could not be stopped
-  #   other if a failure occurred
   start-stop-daemon --stop --quiet \
     --retry=QUIT/30/KILL/5 \
     --pidfile $DEFAULT_DAEMON_PIDFILE \
@@ -298,6 +324,10 @@ do_stop_default_daemon()
   return "$RETVAL"
 }
 
+# Return:
+#  0 if daemon has been reloaded
+#  2 if daemon could not be reloaded
+#  other if a failure occurred
 do_reload_default_daemon()
 {
   start-stop-daemon --stop --quiet \
@@ -308,6 +338,10 @@ do_reload_default_daemon()
   return "$?"
 }
 
+# Return:
+#  0 if daemon has been reloaded
+#  2 if daemon could not be reloaded
+#  other if a failure occurred
 do_force_reload_default_daemon()
 {
   start-stop-daemon --stop --quiet \
@@ -345,6 +379,7 @@ do_command()
   local COMMAND=$1
   shift
 
+  # Convert command 'X-default' to just 'X' (i.e. strip suffix '-default').
   local COMMAND_TO_DEFAULT=no
   local WITH_STRIPPED_SUFFIX=${COMMAND%-default}
   [ "$WITH_STRIPPED_SUFFIX" = "$COMMAND" ] || COMMAND_TO_DEFAULT=yes
@@ -352,28 +387,34 @@ do_command()
 
   [ "$VERBOSE" != no ] && log_progress_msg "->"
 
+  # If command is like 'start-default', 'stop-default' etc.
   if [ "$COMMAND_TO_DEFAULT" = yes ]; then
     do_with_default_daemon $COMMAND
     return "$?"
   fi
 
+  # If command is given with arguments, i.e. 'start smth smth_else'
   if [ ! -z "$1" ]; then
     do_with_given_specific_daemons $COMMAND "$@"
     return "$?"
   fi
 
   local ERRORS=0
+
+  # List of names of user-defined configuration files.
   local ALL_CONFNAMES=$(
     ls -1 "$CONFDIR"/*.xml 2>/dev/null \
     | sed 's/^.\+\/\(.\+\)\.xml$/\1/g' \
     | tr '\n' ' '
   )
 
+  # Do not start if disabled.
   if [ "$COMMAND" = start -a -z "$ALL_CONFNAMES" -a "$RUN_AT_STARTUP" != 1 ]; then
     [ "$VERBOSE" != no ] && log_progress_msg "(disabled; see /etc/default/#{NAME})"
     return 2
   fi
 
+  # Command actions.
   if [ -z "$ALL_CONFNAMES" -o "$ALWAYS_RUN_DEFAULT_DAEMON" = 1 ]; then
     do_with_default_daemon $COMMAND
     ERRORS=$(expr $ERRORS + $?)
