@@ -1,3 +1,7 @@
+Description: Drop off superfluous library dependencies of plugins.
+Author: Leonid Borisenko <leo.borisenko@gmail.com>
+Last-Update: 2010-06-09
+
 Index: uwsgi-0.9.5.1/uwsgiconfig.py
 ===================================================================
 --- uwsgi-0.9.5.1.orig/uwsgiconfig.py	2010-06-05 07:48:44.000000000 +0300

@@ -1,3 +1,12 @@
+Description: Add possibility of overriding NGX_HTTP_UWSGI_TEMP_PATH define.
+ In upstream source this path is hardcoded as relative path and nginx will
+ search it in 'prefix' directory (by default in /usr/local/nginx).
+ .
+ This patch add possibility for Debian maintainer of nginx explicitly define
+ where to place uWSGI temporary directory.
+Author: Leonid Borisenko <leo.borisenko@gmail.com>
+Last-Update: 2010-06-09
+
 Index: uwsgi-0.9.5.1/nginx/ngx_http_uwsgi_module.c
 ===================================================================
 --- uwsgi-0.9.5.1.orig/nginx/ngx_http_uwsgi_module.c	2010-06-08 06:22:37.000000000 +0300
