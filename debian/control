@@ -2,8 +2,8 @@ Source: uwsgi
 Section: web
 Priority: extra
 Maintainer: Leonid Borisenko <leo.borisenko@gmail.com>
-Build-Depends: cdbs, debhelper (>= 7.0.50~), python, python2.5, python2.5-dev,
- python2.6, python2.6-dev, python3.1, python3.1-dev, libxml2-dev, erlang-dev,
+Build-Depends: cdbs, debhelper (>= 7.0.50~), python, python2.5, python2.6,
+ python-all-dev, python3.1, python3.1-dev, libxml2-dev, erlang-dev,
  liblua5.1-0-dev, libperl-dev, apache2-threaded-dev, libapr1-dev,
  libaprutil1-dev, help2man
 Standards-Version: 3.8.4
