@@ -82,6 +82,6 @@ $(patsubst %,install/uwsgi-plugin-%,$(plugins))::
 		< $(CURDIR)/debian/uwsgi-plugin.install.in \
 		> $(CURDIR)/debian/$(cdbs_curpkg).install
 
-binary-post-install/uwsgi-various::
+binary-post-install/uwsgi-extra::
 	$(eval docdir = $(CURDIR)/debian/$(cdbs_curpkg)/usr/share/doc/$(cdbs_curpkg))
 	mv $(docdir)/uwsgi_params $(docdir)/uwsgi_params.nginx
