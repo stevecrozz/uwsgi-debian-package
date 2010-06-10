@@ -25,7 +25,7 @@ Description: Fast, self-healing, developer-friendly WSGI server
  languages or platform.
  .
  This dependency package provides uWSGI server for serving on user-selectable
- Python version.
+ Python version(s).
 
 Package: uwsgi-python2.5
 Architecture: any
