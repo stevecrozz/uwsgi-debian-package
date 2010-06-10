@@ -14,9 +14,9 @@ Vcs-Browser: http://github.com/130/uwsgi-debian-package
 Package: uwsgi
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
-  uwsgi-python2.5 (= ${binary:Version})
-  | uwsgi-python2.6 (= ${binary:Version})
-  | uwsgi-python3.1 (= ${binary:Version})
+  uwsgi-python2.5 (>= ${binary:Version})
+  | uwsgi-python2.6 (>= ${binary:Version})
+  | uwsgi-python3.1 (>= ${binary:Version})
 Description: Fast, self-healing, developer-friendly WSGI server
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
