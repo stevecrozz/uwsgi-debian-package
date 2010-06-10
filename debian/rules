@@ -25,12 +25,12 @@ DEB_COMPRESS_EXCLUDE = .class .java .rb
 
 clean::
 	$(RM) $(CURDIR)/uwsgi $(addprefix $(CURDIR)/uwsgi-python, $(python_ver))
-	$(RM) $(CURDIR)/*.{o,pyc}
+	$(RM) $(CURDIR)/*.o $(CURDIR)/*.pyc
 	for name in $(plugins); do \
 		$(RM) $(CURDIR)/$(plugins_dir)/$$name/$${name}_plugin.so; \
 		$(RM) $(CURDIR)/$(plugins_dir)/$$name/uwsgiplugin.pyc; \
 	done
-	$(RM) -r apache2/.libs apache2/mod_uwsgi.{la,lo,slo}
+	$(RM) -r $(CURDIR)/apache2/.libs $(addprefix $(CURDIR)/apache2/mod_uwsgi, .la .lo .slo)
 	for type in $(uwsgi_python_pkg_templates); do \
 		$(RM) $(addprefix $(CURDIR)/debian/uwsgi-python,$(addsuffix .$$type,$(python_ver))); \
 	done
