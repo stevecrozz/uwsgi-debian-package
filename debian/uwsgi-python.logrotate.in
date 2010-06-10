@@ -8,6 +8,6 @@
   create 0640 root root
   sharedscripts
   postrotate
-    /etc/init.d/@@uwsgi_binary@@ force-reload > /dev/null
+    /etc/init.d/@@uwsgi_binary@@ restart > /dev/null
   endscript
 }
