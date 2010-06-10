@@ -95,8 +95,7 @@ Description: Perl PSGI plugin for uWSGI
 
 Package: libapache2-mod-uwsgi
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, uwsgi,
- apache2-mpm-worker (>= 2.2.9-9) | apache2-mpm (>= 2.2.9-9)
+Depends: ${shlibs:Depends}, ${misc:Depends}, apache2, uwsgi
 Description: uWSGI module for Apache2
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
