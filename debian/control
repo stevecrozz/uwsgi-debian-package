@@ -30,9 +30,8 @@ Description: Fast, self-healing, developer-friendly WSGI server
 Package: uwsgi-python2.5
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, python2.5
-Recommends: libapache2-mod-uwsgi (= ${binary:Version})
-Suggests: uwsgi-plugin-lua (= ${binary:Version}),
- uwsgi-plugin-psgi (= ${binary:Version}), uwsgi-extra (= ${binary:Version})
+Recommends: libapache2-mod-uwsgi
+Suggests: uwsgi-plugin-lua, uwsgi-plugin-psgi, uwsgi-extra
 Description: Fast, self-healing, developer-friendly WSGI server (Python 2.5)
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
@@ -45,9 +44,8 @@ Description: Fast, self-healing, developer-friendly WSGI server (Python 2.5)
 Package: uwsgi-python2.6
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, python2.6
-Recommends: libapache2-mod-uwsgi (= ${binary:Version})
-Suggests: uwsgi-plugin-lua (= ${binary:Version}),
- uwsgi-plugin-psgi (= ${binary:Version}), uwsgi-extra (= ${binary:Version})
+Recommends: libapache2-mod-uwsgi
+Suggests: uwsgi-plugin-lua, uwsgi-plugin-psgi, uwsgi-extra
 Description: Fast, self-healing, developer-friendly WSGI server (Python 2.6)
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
@@ -60,9 +58,8 @@ Description: Fast, self-healing, developer-friendly WSGI server (Python 2.6)
 Package: uwsgi-python3.1
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, python3.1
-Recommends: libapache2-mod-uwsgi (= ${binary:Version})
-Suggests: uwsgi-plugin-lua (= ${binary:Version}),
- uwsgi-plugin-psgi (= ${binary:Version}), uwsgi-extra (= ${binary:Version})
+Recommends: libapache2-mod-uwsgi
+Suggests: uwsgi-plugin-lua, uwsgi-plugin-psgi, uwsgi-extra
 Description: Fast, self-healing, developer-friendly WSGI server (Python 3.1)
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
@@ -74,7 +71,7 @@ Description: Fast, self-healing, developer-friendly WSGI server (Python 3.1)
 
 Package: uwsgi-plugin-lua
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, uwsgi (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, uwsgi
 Description: Lua WSAPI plugin for uWSGI
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
@@ -86,7 +83,7 @@ Description: Lua WSAPI plugin for uWSGI
 
 Package: uwsgi-plugin-psgi
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, uwsgi (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, uwsgi
 Description: Perl PSGI plugin for uWSGI
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
