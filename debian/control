@@ -28,7 +28,7 @@ Package: uwsgi-python2.5
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, python2.5
 Provides: uwsgi-any
-Suggests: uwsgi-various
+Suggests: uwsgi-extra
 Description: Fast, self-healing, developer-friendly WSGI server (Python 2.5)
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
@@ -41,7 +41,7 @@ Description: Fast, self-healing, developer-friendly WSGI server (Python 2.5)
 Package: uwsgi-python2.6
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, python2.6
-Suggests: uwsgi-various
+Suggests: uwsgi-extra
 Provides: uwsgi-any
 Description: Fast, self-healing, developer-friendly WSGI server (Python 2.6)
  uWSGI is aimed for professional python webapps deployment and development.
@@ -56,7 +56,7 @@ Package: uwsgi-python3.1
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, python3.1
 Provides: uwsgi-any
-Suggests: uwsgi-various
+Suggests: uwsgi-extra
 Description: Fast, self-healing, developer-friendly WSGI server (Python 3.1)
  uWSGI is aimed for professional python webapps deployment and development.
  Over time it has evolved in a complete stack for networked/clustered python
