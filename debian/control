@@ -87,6 +87,8 @@ Description: Perl PSGI plugin for uWSGI
  applications, implementing message/object passing, RPC, process management and
  a plugin loading technology that can be used to add support for other
  languages or platform.
+ .
+ This package provide Perl PSGI plugin for uWSGI.
 
 Package: libapache2-mod-uwsgi
 Architecture: any
